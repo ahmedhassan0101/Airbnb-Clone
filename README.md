@@ -1,4 +1,20 @@
+<<<<<<< HEAD
 ### Next App
+=======
+Airbnb Clone
+This project is an Airbnb clone built using modern web technologies. It's developed with Next.js 14 for server-side rendering and static site generation, TypeScript for type-safe development, Prisma as an ORM for database management, and Supabase for the backend, including authentication and real-time data synchronization.
+
+Key Features:
+
+User Authentication and Authorization
+Dynamic Property Listings and Management
+Search and Filtering Options
+Booking and Reservation System
+Real-time Updates with Supabase
+This project demonstrates best practices in full-stack development, utilizing a scalable architecture and modern toolchain to create a production-ready web application.
+
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+>>>>>>> df439cfc39524673f113184fe0d1c12e2e35b77d
 
 ```sh
 
