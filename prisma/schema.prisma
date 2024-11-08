@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// model TestProfile {
+// id  String @id @default(uuid())
+// name String
+// }
+model Profile {
+  id           String     @id @default(uuid())
+  clerkId      String     @unique
+  firstName    String
+  lastName     String
+  username     String
+  email        String
+  profileImage String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  properties      Property[] 
+  favorites    Favorite[]
+}
+model Property {
+  id          String     @id @default(uuid())
+  name        String
+  tagline     String
+  category    String
+  image       String
+  country     String
+  description String
+  price       Int
+  guests      Int
+  bedrooms    Int
+  beds        Int
+  baths       Int
+  amenities   String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  profile     Profile    @relation(fields: [profileId], references: [clerkId], onDelete: Cascade)
+  profileId   String
+  favorites    Favorite[]
+
+
+  @@index([category])
+  @@index([name])
+  @@index([tagline])
+  @@index([profileId])
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile  @relation(fields: [profileId], references: [clerkId], onDelete: Cascade)
+  profileId String
+
+  property   Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// model Profile {
+//   id           String     @id @default(uuid())
+//   clerkId      String     @unique
+//   firstName    String
+//   lastName     String
+//   username     String
+//   email        String
+//   profileImage String
+//   properties   Property[] // Add this relation
+//   favorites    Property[] @relation("UserFavorites")
+//   reviews      Review[]
+//   bookings     Booking[]
+//   createdAt    DateTime   @default(now())
+//   updatedAt    DateTime   @updatedAt
+// }
+
+// model Property {
+//   id          String     @id @default(uuid())
+//   name        String
+//   tagline     String
+//   category    String
+//   image       String
+//   country     String
+//   description String     @db.Text
+//   price       Float
+//   guests      Int
+//   bedrooms    Int
+//   beds        Int
+//   baths       Float
+//   amenities   String[]
+//   createdAt   DateTime   @default(now())
+//   updatedAt   DateTime   @updatedAt
+//   profile     Profile    @relation(fields: [profileId], references: [id])
+//   profileId   String
+//   favorites   Profile[]  @relation("UserFavorites")
+//   reviews     Review[]
+//   bookings    Booking[]
+// }
+
+// model Review {
+//   id         String   @id @default(uuid())
+//   rating     Int
+//   comment    String   @db.Text
+//   property   Property @relation(fields: [propertyId], references: [id])
+//   propertyId String
+//   profile    Profile  @relation(fields: [profileId], references: [id])
+//   profileId  String
+//   createdAt  DateTime @default(now())
+//   updatedAt  DateTime @updatedAt
+// }
+
+// model Booking {
+//   id         String   @id @default(uuid())
+//   startDate  DateTime
+//   endDate    DateTime
+//   property   Property @relation(fields: [propertyId], references: [id])
+//   propertyId String
+//   profile    Profile  @relation(fields: [profileId], references: [id])
+//   profileId  String
+//   createdAt  DateTime @default(now())
+//   updatedAt  DateTime @updatedAt
+// }
