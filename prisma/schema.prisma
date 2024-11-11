@@ -26,6 +26,7 @@ generator client {
 // id  String @id @default(uuid())
 // name String
 // }
+
 model Profile {
   id           String     @id @default(uuid())
   clerkId      String     @unique
