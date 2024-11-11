@@ -231,7 +231,7 @@ export async function fetchProperties({
       { tagline: { contains: search, mode: Prisma.QueryMode.insensitive } },
     ],
   };
-// , total
+  // , total
   const [properties] = await Promise.all([
     db.property.findMany({
       where: whereClause,
@@ -255,8 +255,9 @@ export async function fetchProperties({
     // }),
   ]);
 
-  return { properties
-    // , total 
+  return {
+    properties,
+    // , total
   };
 }
 export const fetchFavoriteId = async ({
@@ -328,22 +329,22 @@ export const fetchFavorites = async () => {
   return favorites.map((favorite) => favorite.property);
 };
 
-// export const fetchPropertyDetails = (id: string) => {
-//   return db.property.findUnique({
-//     where: {
-//       id,
-//     },
-//     include: {
-//       profile: true,
-//       bookings: {
-//         select: {
-//           checkIn: true,
-//           checkOut: true,
-//         },
-//       },
-//     },
-//   });
-// };
+export const fetchPropertyDetails = (id: string) => {
+  return db.property.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      profile: true,
+      // bookings: {
+      //   select: {
+      //     checkIn: true,
+      //     checkOut: true,
+      //   },
+      // },
+    },
+  });
+};
 
 // export async function createReviewAction(prevState: any, formData: FormData) {
 //   const user = await getAuthUser();
