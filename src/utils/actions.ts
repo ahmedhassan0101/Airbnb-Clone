@@ -3,7 +3,12 @@ import db from "./db";
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { imageSchema, profileSchema, propertySchema } from "./schemas";
+import {
+  createReviewSchema,
+  imageSchema,
+  profileSchema,
+  propertySchema,
+} from "./schemas";
 import { FormState } from "@/types/form";
 import { uploadImage } from "./image";
 import { validateBody, validateData, ValidationError } from "./validation";
@@ -16,7 +21,12 @@ async function getAuthUser() {
   if (!userId) {
     throw new AuthError("Not authenticated");
   }
-  const user = await clerkClient.users.getUser(userId);
+  // const user = await clerkClient.users.getUser(userId);
+  const user = await currentUser();
+  if (!user) {
+    throw new Error('You must be logged in to access this route');
+  }
+  if (!user.privateMetadata.hasProfile) redirect("/profile/create");
   return { user, userId };
 }
 
@@ -27,18 +37,25 @@ class AuthError extends Error {
   }
 }
 
-function handleError(error: unknown): FormState {
-  if (error instanceof AuthError) {
-    return { message: error.message };
-  }
-  if (error instanceof Error) {
-    return {
-      message: "Form validation failed",
-      errors: { form: [error.message] },
-    };
-  }
-  return { message: "An unexpected error occurred" };
-}
+const handleError = (error: unknown): { message: string } => {
+  console.log(error);
+  return {
+    message: error instanceof Error ? error.message : 'An error occurred',
+  };
+};
+
+// function handleError(error: unknown): FormState {
+//   if (error instanceof AuthError) {
+//     return { message: error.message };
+//   }
+//   if (error instanceof Error) {
+//     return {
+//       message: "Form validation failed",
+//       errors: { form: [error.message] },
+//     };
+//   }
+//   return { message: "An unexpected error occurred" };
+// }
 
 export async function createProfileAction(
   prevState: FormState,
@@ -346,121 +363,121 @@ export const fetchPropertyDetails = (id: string) => {
   });
 };
 
-// export async function createReviewAction(prevState: any, formData: FormData) {
-//   const user = await getAuthUser();
-//   try {
-//     const rawData = Object.fromEntries(formData);
+export async function createReviewAction(prevState: any, formData: FormData) {
+  const { userId } = await getAuthUser();
+  try {
+    const rawData = Object.fromEntries(formData);
 
-//     const validatedFields = validateBody(createReviewSchema, rawData);
+    const validatedFields = validateBody(createReviewSchema, rawData);
 
-//     await db.review.create({
-//       data: {
-//         ...validatedFields,
-//         profileId: user.id,
-//       },
-//     });
-//     revalidatePath(`/properties/${validatedFields.propertyId}`);
-//     return { message: 'Review submitted successfully' };
-//   } catch (error) {
-//     return renderError(error);
-//   }
-// }
+    await db.review.create({
+      data: {
+        ...validatedFields,
+        profileId: userId,
+      },
+    });
+    revalidatePath(`/properties/${validatedFields.propertyId}`);
+    return { message: "Review submitted successfully" };
+  } catch (error) {
+    return handleError(error);
+  }
+}
 
-// export async function fetchPropertyReviews(propertyId: string) {
-//   const reviews = await db.review.findMany({
-//     where: {
-//       propertyId,
-//     },
-//     select: {
-//       id: true,
-//       rating: true,
-//       comment: true,
-//       profile: {
-//         select: {
-//           firstName: true,
-//           profileImage: true,
-//         },
-//       },
-//     },
-//     orderBy: {
-//       createdAt: 'desc',
-//     },
-//   });
-//   return reviews;
-// }
+export async function fetchPropertyReviews(propertyId: string) {
+  const reviews = await db.review.findMany({
+    where: {
+      propertyId,
+    },
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      profile: {
+        select: {
+          firstName: true,
+          profileImage: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return reviews;
+}
 
-// export const fetchPropertyReviewsByUser = async () => {
-//   const user = await getAuthUser();
-//   const reviews = await db.review.findMany({
-//     where: {
-//       profileId: user.id,
-//     },
-//     select: {
-//       id: true,
-//       rating: true,
-//       comment: true,
-//       property: {
-//         select: {
-//           name: true,
-//           image: true,
-//         },
-//       },
-//     },
-//   });
-//   return reviews;
-// };
+export const fetchPropertyReviewsByUser = async () => {
+  const { userId } = await getAuthUser();
+  const reviews = await db.review.findMany({
+    where: {
+      profileId: userId,
+    },
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      property: {
+        select: {
+          name: true,
+          image: true,
+        },
+      },
+    },
+  });
+  return reviews;
+};
 
-// export const deleteReviewAction = async (prevState: { reviewId: string }) => {
-//   const { reviewId } = prevState;
-//   const user = await getAuthUser();
+export const deleteReviewAction = async (prevState: { reviewId: string }) => {
+  const { reviewId } = prevState;
+  const { userId } = await getAuthUser();
 
-//   try {
-//     await db.review.delete({
-//       where: {
-//         id: reviewId,
-//         profileId: user.id,
-//       },
-//     });
+  try {
+    await db.review.delete({
+      where: {
+        id: reviewId,
+        profileId: userId,
+      },
+    });
 
-//     revalidatePath('/reviews');
-//     return { message: 'Review deleted successfully' };
-//   } catch (error) {
-//     return renderError(error);
-//   }
-// };
+    revalidatePath("/reviews");
+    return { message: "Review deleted successfully" };
+  } catch (error) {
+    return handleError(error);
+  }
+};
 
-// export const findExistingReview = async (
-//   userId: string,
-//   propertyId: string
-// ) => {
-//   return db.review.findFirst({
-//     where: {
-//       profileId: userId,
-//       propertyId: propertyId,
-//     },
-//   });
-// };
+export const findExistingReview = async (
+  userId: string,
+  propertyId: string
+) => {
+  return db.review.findFirst({
+    where: {
+      profileId: userId,
+      propertyId: propertyId,
+    },
+  });
+};
 
-// export async function fetchPropertyRating(propertyId: string) {
-//   const result = await db.review.groupBy({
-//     by: ['propertyId'],
-//     _avg: {
-//       rating: true,
-//     },
-//     _count: {
-//       rating: true,
-//     },
-//     where: {
-//       propertyId,
-//     },
-//   });
+export async function fetchPropertyRating(propertyId: string) {
+  const result = await db.review.groupBy({
+    by: ["propertyId"],
+    _avg: {
+      rating: true,
+    },
+    _count: {
+      rating: true,
+    },
+    where: {
+      propertyId,
+    },
+  });
 
-//   // empty array if no reviews
-//   return {
-//     rating: result[0]?._avg.rating?.toFixed(1) ?? 0,
-//     count: result[0]?._count.rating ?? 0,
-//   };
-// }
+  // empty array if no reviews
+  return {
+    rating: result[0]?._avg.rating?.toFixed(1) ?? 0,
+    count: result[0]?._count.rating ?? 0,
+  };
+}
 
 // export const createBookingAction = async (prevState: {
 //   propertyId: string;
